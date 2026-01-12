@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Pro-Alignment Diagnostic Lab</title>
+    <style>
+        :root {
+            --accent: #4a90e2;
+            --danger: #ff4b2b;
+            --success: #32ff7e;
+            --bg: #0f0f0f;
+            --panel: #1e1e1e;
+        }
+
+        body {
+            background: var(--bg);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            margin: 0;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1300px;
+            width: 100%;
+            height: 90vh;
+        }
+
+        /* Dashboard & UI */
+        .side-bar {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-header {
+            background: #222;
+            padding: 12px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #444;
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 1.5px;
+        }
+
+        .pro-ui {
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 0 0 12px 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            border: 1px solid #333;
+        }
+
+        .input-card {
+            background: #262626;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        .input-card label {
+            display: block;
+            font-size: 0.65rem;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .input-card input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: var(--success);
+            padding: 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+
+        /* HUD & Table */
+        canvas {
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #333;
+            flex-grow: 1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #steer-gauge {
+            width: 70px;
+            height: 70px;
+            border: 5px solid #444;
+            border-radius: 50%;
+            position: relative;
+            margin: 5px auto;
+            transition: transform 0.1s;
+        }
+
+        #steer-gauge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 32px;
+            width: 6px;
+            height: 32px;
+            background: var(--danger);
+            border-radius: 3px;
+        }
+
+        .analysis-table {
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        th {
+            text-align: left;
+            color: var(--accent);
+            padding: 8px 0;
+            border-bottom: 2px solid #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 6px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .val {
+            color: var(--success);
+            font-weight: bold;
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .rec {
+            color: #ffbc00;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .cat {
+            background: #252525;
+            font-weight: bold;
+            color: #777;
+            padding-left: 8px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .btn-reset {
+            margin-top: auto;
+            padding: 12px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-layout">
+        <div class="side-bar">
+            <div class="control-header">BEFORE MEASUREMENTS</div>
+            <div class="pro-ui">
+                <div
+                    style="grid-column: span 2; text-align: center; background: #111; padding: 10px; border-radius: 8px; margin-bottom: 5px;">
+                    <div id="steer-gauge"></div>
+                    <div id="steer-val"
+                        style="color: var(--danger); font-weight: bold; font-size: 1.2rem; margin-top: 5px;">0°</div>
+                    <label style="font-size: 0.6rem; color: #555;">STEER AHEAD ANGLE</label>
+                </div>
+
+                <div class="input-card"><label>LF Camber</label><input type="number" id="lfCamber" step="0.1"
+                        value="0.5"></div>
+                <div class="input-card"><label>LF Toe</label><input type="number" id="lfToe" step="0.01" value="0.16">
+                </div>
+                <div class="input-card"><label>RF Camber</label><input type="number" id="rfCamber" step="0.1"
+                        value="0.5"></div>
+                <div class="input-card"><label>RF Toe</label><input type="number" id="rfToe" step="0.01" value="0.16">
+                </div>
+                <div class="input-card" style="grid-column: span 2;"><label>Thrust Angle (Rear)</label><input
+                        type="number" id="rearThrust" step="0.01" value="0"></div>
+            </div>
+
+            <div class="analysis-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="2">Adjustment Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cat">
+                            <td colspan="2">Front Axle Set</td>
+                        </tr>
+                        <tr>
+                            <td>Total Toe</td>
+                            <td id="totalToe" class="val">0.32°</td>
+                        </tr>
+                        <tr>
+                            <td>Steer Ahead Drift</td>
+                            <td id="steerDrift" class="val">0.00°</td>
+                        </tr>
+                        <tr class="cat">
+                            <td colspan="2">Rear Axle Set</td>
+                        </tr>
+                        <tr>
+                            <td>Thrust Line Offset</td>
+                            <td id="thrustOffset" class="val">0.00°</td>
+                        </tr>
+                        <tr class="cat">
+                            <td colspan="2">Diagnostic Targets</td>
+                        </tr>
+                        <tr>
+                            <td>Rec. LF Toe Adjustment</td>
+                            <td id="lfRec" class="rec">0.16</td>
+                        </tr>
+                        <tr>
+                            <td>Rec. RF Toe Adjustment</td>
+                            <td id="rfRec" class="rec">0.16</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-reset" onclick="resetSim()">Reset to Factory Specs</button>
+        </div>
+
+        <canvas id="simCanvas" width="850" height="650"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        let car = { x: 425, y: 450, w: 75, h: 130, angle: -Math.PI / 2 };
+        let roadOffset = 0;
+
+        function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+        function resetSim() {
+            ['lfCamber', 'rfCamber', 'lfToe', 'rfToe', 'rearThrust'].forEach(id => {
+                document.getElementById(id).value = id.includes('Toe') ? 0.16 : (id.includes('Camber') ? 0.5 : 0);
+            });
+            car.x = 425; car.angle = -Math.PI / 2;
+        }
+
+        function draw() {
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Animated Road
+            roadOffset = (roadOffset + 12) % 100;
+            ctx.strokeStyle = "#222";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([40, 60]);
+            ctx.lineDashOffset = -roadOffset;
+            for (let x = 212; x < canvas.width; x += 212) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+
+            const lfC = getVal('lfCamber'), rfC = getVal('rfCamber');
+            const lfT = getVal('lfToe'), rfT = getVal('rfToe');
+            const thr = getVal('rearThrust');
+
+            // Physics Logic
+            let drift = ((lfT - rfT) * 0.0012) + ((lfC - rfC) * 0.0007) + (thr * 0.0025);
+            car.angle += drift;
+            car.x += Math.cos(car.angle) * 6;
+
+            // Table & HUD Updates
+            document.getElementById('totalToe').innerText = (lfT + rfT).toFixed(2) + "°";
+            document.getElementById('steerDrift').innerText = (lfT - rfT).toFixed(2) + "°";
+            document.getElementById('thrustOffset').innerText = thr.toFixed(2) + "°";
+            document.getElementById('lfRec').innerText = (0.16 - (drift * 5)).toFixed(2);
+            document.getElementById('rfRec').innerText = (0.16 + (drift * 5)).toFixed(2);
+
+            let steerAngle = -drift * 6500;
+            document.getElementById('steer-gauge').style.transform = `rotate(${steerAngle}deg)`;
+            document.getElementById('steer-val').innerText = Math.round(steerAngle) + "°";
+
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle + Math.PI / 2);
+
+            // LASER GUIDE (Heading Line)
+            ctx.setLineDash([5, 20]);
+            ctx.strokeStyle = "rgba(50, 255, 126, 0.6)";
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(0, -600); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Chassis
+            ctx.fillStyle = "#4a90e2";
+            ctx.shadowBlur = 15; ctx.shadowColor = "rgba(74, 144, 226, 0.3)";
+            ctx.fillRect(-car.w / 2, -car.h / 2, car.w, car.h);
+            ctx.shadowBlur = 0;
+
+            // Wheels & Wear Logic
+            const drawWheel = (x, y, t, c) => {
+                ctx.save(); ctx.translate(x, y); ctx.rotate(t * Math.PI / 180);
+                ctx.fillStyle = "#000"; ctx.fillRect(-12, -24, 24, 48);
+
+                // Wear Indicator (Red Heat Stripes)
+                if (Math.abs(c) > 0.9 || Math.abs(t) > 0.4) {
+                    ctx.fillStyle = "#ff4b2b";
+                    if (c > 0.9) ctx.fillRect(8, -24, 4, 48); // Outside wear
+                    else if (c < -0.9) ctx.fillRect(-12, -24, 4, 48); // Inside wear
+                }
+                ctx.restore();
+            };
+
+            drawWheel(-48, -48, lfT, lfC);
+            drawWheel(48, -48, -rfT, rfC);
+            drawWheel(-48, 48, thr, 0);
+            drawWheel(48, 48, thr, 0);
+
+            ctx.restore();
+            if (car.x < -50 || car.x > canvas.width + 50) car.x = 425;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+
+</html>
